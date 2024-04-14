@@ -2,17 +2,23 @@ import telebot
 import sqlite3
 from telebot import types
 
+from data.visov.tg_genre import genre
+from data.visov.tg_mangaka import name
+from data.visov.tg_status import status
+from data.visov.tg_title import title
+from data.visov.tg_year import year
+
+from data.visov.all_genres import all_genre
+
+from data.visov.basa import basa
+
 token = '6819222399:AAE9W2bLqFLTc-bhbSqOep7Pa-_68ocophA'
 bot = telebot.TeleBot(token)
-# vmesto_BD = [['Берсерк', 'data/all_anime/Berserk.png', 'https://animego.org/anime/berserk-313', ],
-#              ['Реинкарнация Безработного', 'data/all_anime/Reincarnation of unemployed.jpg',
-#               'https://animego.org/anime/reinkarnaciya-bezrabotnogo-istoriya-o-priklyucheniyah-v-drugom-mire-1690'],
-#              ['Ре Зеро', 'data/all_anime/Re Zero.jpg',
-#               'https://animego.org/anime/re-zhizn-v-alternativnom-mire-s-nulya-109']]
 
-cout_of_anime = 4
+
+count_of_anime = 4
 # формат БД:
-# nazv   0
+# nazv    0
 # genre   1
 # status  2
 # year    3
@@ -37,7 +43,6 @@ def handle_text(m):
     chat_id = m.chat.id
 
     if m.text == v[0]:
-        # global vmesto_BD
         index_v_BD = 0
 
         keyboard = types.InlineKeyboardMarkup(row_width=1)
@@ -61,7 +66,6 @@ def callback_inline(call):
     callback = info[0]
     chat_id = call.from_user.id
     message_id = call.message.id
-    # global vmesto_BD
     print(info)
 
     if call.message:
@@ -69,25 +73,19 @@ def callback_inline(call):
             index_v_BD = int(info[1])
             index_v_BD += 1
 
-            con = sqlite3.connect("tg.sqlite")
-            cur = con.cursor()
-            result = cur.execute("""SELECT title, genre, status, year, mangaka, retell, image, link FROM anime
-                        WHERE id = ?""", (index_v_BD + 1,)).fetchall()
-            print(result)
-            result = result[0]
-            con.close()
+            result = basa(index_v_BD)
 
-            if index_v_BD != cout_of_anime - 1 and index_v_BD != 0:
+            if index_v_BD != count_of_anime - 1 and index_v_BD != 0:
                 keyboard = types.InlineKeyboardMarkup()
                 add1 = types.InlineKeyboardButton(text=">>", callback_data=f'>>|{index_v_BD}')
                 add2 = types.InlineKeyboardButton(text="<<", callback_data=f'<<|{index_v_BD}')
-                addc = types.InlineKeyboardButton(text=f"({index_v_BD + 1}/{cout_of_anime})",
+                addc = types.InlineKeyboardButton(text=f"({index_v_BD + 1}/{count_of_anime})",
                                                   callback_data=f'cifr|{index_v_BD}')
                 keyboard.row(add2, addc, add1)
             else:
                 keyboard = types.InlineKeyboardMarkup()
                 add2 = types.InlineKeyboardButton(text="<<", callback_data=f'<<|{index_v_BD}')
-                addc = types.InlineKeyboardButton(text=f"({index_v_BD + 1}/{cout_of_anime})",
+                addc = types.InlineKeyboardButton(text=f"({index_v_BD + 1}/{count_of_anime})",
                                                   callback_data=f'cifr|{index_v_BD}')
                 keyboard.row(add2, addc)
 
@@ -98,7 +96,11 @@ def callback_inline(call):
             addback = types.InlineKeyboardButton("🔙 Назад в меню", callback_data=f'back_to_menu|{index_v_BD}')
             keyboard.row(addback)
 
+            addfilter = types.InlineKeyboardButton("Фильтр", callback_data=f'filter|{index_v_BD}')
+            keyboard.row(addfilter)
+
             nazv = f'{result[0]}\n\n{result[5]}'
+
             photo = open(result[6], 'rb')
 
             bot.edit_message_media(media=telebot.types.InputMedia(type='photo', media=photo, caption=nazv),
@@ -107,24 +109,19 @@ def callback_inline(call):
             index_v_BD = int(info[1])
             index_v_BD -= 1
 
-            con = sqlite3.connect("tg.sqlite")
-            cur = con.cursor()
-            result = cur.execute("""SELECT title, genre, status, year, mangaka, retell, image, link FROM anime
-                                    WHERE id = ?""", (index_v_BD + 1,)).fetchall()
-            result = result[0]
-            con.close()
+            result = basa(index_v_BD)
 
-            if index_v_BD != 0 and index_v_BD != cout_of_anime - 1:
+            if index_v_BD != 0 and index_v_BD != count_of_anime - 1:
                 keyboard = types.InlineKeyboardMarkup()
                 add1 = types.InlineKeyboardButton(text=">>", callback_data=f'>>|{index_v_BD}')
                 add2 = types.InlineKeyboardButton(text="<<", callback_data=f'<<|{index_v_BD}')
-                addc = types.InlineKeyboardButton(text=f"({index_v_BD + 1}/{cout_of_anime})",
+                addc = types.InlineKeyboardButton(text=f"({index_v_BD + 1}/{count_of_anime})",
                                                   callback_data=f'cifr|{index_v_BD}')
                 keyboard.row(add2, addc, add1)
             else:
                 keyboard = types.InlineKeyboardMarkup()
                 add1 = types.InlineKeyboardButton(text=">>", callback_data=f'>>|{index_v_BD}')
-                addc = types.InlineKeyboardButton(text=f"({index_v_BD + 1}/{cout_of_anime})",
+                addc = types.InlineKeyboardButton(text=f"({index_v_BD + 1}/{count_of_anime})",
                                                   callback_data=f'cifr|{index_v_BD}')
                 keyboard.row(addc, add1)
 
@@ -135,28 +132,40 @@ def callback_inline(call):
             addback = types.InlineKeyboardButton("🔙 Назад в меню", callback_data=f'back_to_menu|{index_v_BD}')
             keyboard.row(addback)
 
+            addfilter = types.InlineKeyboardButton("Фильтр", callback_data=f'filter|{index_v_BD}')
+            keyboard.row(addfilter)
+
             nazv = f'{result[0]}\n\n{result[5]}'
+
             photo = open(result[6], 'rb')
 
             bot.edit_message_media(media=telebot.types.InputMedia(type='photo', media=photo, caption=nazv),
                                    chat_id=chat_id, message_id=message_id,
                                    reply_markup=keyboard)
         elif callback == "all_anime":
-
             index_v_BD = int(info[1])
 
-            con = sqlite3.connect("tg.sqlite")
-            cur = con.cursor()
-            result = cur.execute("""SELECT title, genre, status, year, mangaka, retell, image, link FROM anime
-                                    WHERE id = ?""", (index_v_BD + 1,)).fetchall()
-            result = result[0]
-            con.close()
+            result = basa(index_v_BD)
 
-            keyboard = types.InlineKeyboardMarkup(row_width=2)
-            add1 = types.InlineKeyboardButton(text=">>", callback_data=f'>>|{index_v_BD}')
-            addc = types.InlineKeyboardButton(text=f"({index_v_BD + 1}/{cout_of_anime})",
-                                              callback_data=f'cifr|{index_v_BD}')
-            keyboard.row(add1, addc)
+            if index_v_BD != 0 and index_v_BD != count_of_anime - 1:
+                keyboard = types.InlineKeyboardMarkup()
+                add1 = types.InlineKeyboardButton(text=">>", callback_data=f'>>|{index_v_BD}')
+                add2 = types.InlineKeyboardButton(text="<<", callback_data=f'<<|{index_v_BD}')
+                addc = types.InlineKeyboardButton(text=f"({index_v_BD + 1}/{count_of_anime})",
+                                                  callback_data=f'cifr|{index_v_BD}')
+                keyboard.row(add2, addc, add1)
+            elif index_v_BD == 0:
+                keyboard = types.InlineKeyboardMarkup(row_width=2)
+                add1 = types.InlineKeyboardButton(text=">>", callback_data=f'>>|{index_v_BD}')
+                addc = types.InlineKeyboardButton(text=f"({index_v_BD + 1}/{count_of_anime})",
+                                                  callback_data=f'cifr|{index_v_BD}')
+                keyboard.row(add1, addc)
+            else:
+                keyboard = types.InlineKeyboardMarkup()
+                add2 = types.InlineKeyboardButton(text="<<", callback_data=f'<<|{index_v_BD}')
+                addc = types.InlineKeyboardButton(text=f"({index_v_BD + 1}/{count_of_anime})",
+                                                  callback_data=f'cifr|{index_v_BD}')
+                keyboard.row(add2, addc)
 
             href = result[7]
             addhref = types.InlineKeyboardButton("👁 Смотреть", url=f'{href}')
@@ -165,7 +174,11 @@ def callback_inline(call):
             addback = types.InlineKeyboardButton("🔙 Назад в меню", callback_data=f'back_to_menu|{index_v_BD}')
             keyboard.row(addback)
 
+            addfilter = types.InlineKeyboardButton("Фильтр", callback_data=f'filter|{index_v_BD}')
+            keyboard.row(addfilter)
+
             nazv = f'{result[0]}\n\n{result[5]}'
+
             photo = open(result[6], 'rb')
 
             bot.delete_message(chat_id, message_id)
@@ -174,7 +187,7 @@ def callback_inline(call):
         elif callback == "cifr":
             pass
         elif callback == 'izbran_anime':
-            bot.answer_callback_query(callback_query_id=call.id, text='На данный момент, раздел «⭐ Избранное» '
+            bot.answer_callback_query(callback_query_id=call.id, text='Раздел «⭐ Избранное» '
                                                                       'находится в '
                                                                       'разработке.\n\n🏗🚧👷‍♂')
         elif callback == 'back_to_menu':
@@ -186,8 +199,38 @@ def callback_inline(call):
             bot.delete_message(chat_id, message_id)
 
             photo_start_anime = open('data/phones/start_anime.jpg', 'rb')
+
             bot.send_photo(chat_id, photo_start_anime, caption=f'🤠 Выбери раздел, который тебе нужен',
                            reply_markup=keyboard)
+        elif callback == 'filter':
+            index_v_BD = int(info[1])
+            keyboard = types.InlineKeyboardMarkup(row_width=1)
+            add1 = types.InlineKeyboardButton(text="Жанр", callback_data=f'genre|{index_v_BD}')
+            # add2 = types.InlineKeyboardButton(text="Мангака", callback_data=f'name|{0}')
+            # add3 = types.InlineKeyboardButton(text="Статус", callback_data=f'status|{0}')
+            # add4 = types.InlineKeyboardButton(text="Год", callback_data=f'year|{0}')
+            # add5 = types.InlineKeyboardButton(text="Название", callback_data=f'title|{index_v_BD}')
+            addback = types.InlineKeyboardButton(text="Назад", callback_data=f'all_anime|{index_v_BD}')
+
+            keyboard.row(add1)
+            # keyboard.row(add2)
+            # keyboard.row(add3)
+            # keyboard.row(add4)
+            # keyboard.row(add5)
+            keyboard.row(addback)
+
+            bot.delete_message(chat_id, message_id)
+
+            photo = open('data/phones/filter.jpg', 'rb')
+
+            bot.send_photo(chat_id, photo, caption=f'Что ты ищешь?',
+                           reply_markup=keyboard)
+        elif callback == 'title':
+
+            genres = all_genre()
+            for e in genres:
+                for x in e.split(', '):
+                    print(x)
 
 
 bot.polling(none_stop=True, interval=0)
