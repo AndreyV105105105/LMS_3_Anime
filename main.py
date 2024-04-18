@@ -9,6 +9,7 @@ from data.visov.tg_title import title
 from data.visov.tg_year import year
 
 from data.visov.all_genres import all_genre
+from data.visov.all_statuses import all_statuses
 
 from data.visov.basa import basa
 
@@ -64,9 +65,13 @@ def handle_text(m):
 def callback_inline(call):
     info = call.data.split('|')
     callback = info[0]
+    pravo = callback.split('>>')
+    levo = callback.split('<<')
     chat_id = call.from_user.id
     message_id = call.message.id
     print(info)
+
+    statuses = all_statuses()
 
     if call.message:
         if callback == ">>":
@@ -205,16 +210,16 @@ def callback_inline(call):
         elif callback == 'filter':
             index_v_BD = int(info[1])
             keyboard = types.InlineKeyboardMarkup(row_width=1)
-            add1 = types.InlineKeyboardButton(text="Жанр", callback_data=f'genre|{index_v_BD}')
+            # add1 = types.InlineKeyboardButton(text="Жанр", callback_data=f'genre|{index_v_BD}')
             # add2 = types.InlineKeyboardButton(text="Мангака", callback_data=f'name|{0}')
-            # add3 = types.InlineKeyboardButton(text="Статус", callback_data=f'status|{0}')
+            add3 = types.InlineKeyboardButton(text="Статус", callback_data=f'status|{0}')
             # add4 = types.InlineKeyboardButton(text="Год", callback_data=f'year|{0}')
             # add5 = types.InlineKeyboardButton(text="Название", callback_data=f'title|{index_v_BD}')
             addback = types.InlineKeyboardButton(text="Назад", callback_data=f'all_anime|{index_v_BD}')
 
-            keyboard.row(add1)
+            # keyboard.row(add1)
             # keyboard.row(add2)
-            # keyboard.row(add3)
+            keyboard.row(add3)
             # keyboard.row(add4)
             # keyboard.row(add5)
             keyboard.row(addback)
@@ -225,12 +230,153 @@ def callback_inline(call):
 
             bot.send_photo(chat_id, photo, caption=f'Что ты ищешь?',
                            reply_markup=keyboard)
-        elif callback == 'title':
+        elif callback == 'status':
+            keys_status = list(statuses.keys())
+            print(keys_status)
+            keyboard = types.InlineKeyboardMarkup()
+            z = []
+            for i in range(len(keys_status)):
+                z.append(types.InlineKeyboardButton(text=f"{keys_status[i]}", callback_data=f'{keys_status[i]}|{0}'))
+                if i == len(keys_status) - 1 or len(z) == 4:
+                    if len(z) == 4:
+                        keyboard.row(z[0], z[1], z[2], z[3])
+                    elif len(z) == 3:
+                        keyboard.row(z[0], z[1], z[2])
+                    elif len(z) == 2:
+                        keyboard.row(z[0], z[1])
+                    else:
+                        keyboard.row(z[0])
+                    z = []
 
-            genres = all_genre()
-            for e in genres:
-                for x in e.split(', '):
-                    print(x)
+            bot.delete_message(chat_id, message_id)
+
+            bot.send_message(chat_id, f'Выбери', reply_markup=keyboard)
+
+        elif callback in all_statuses():
+            result_all = status(callback)
+
+            index_v_BD = int(info[1])
+
+            result = result_all[index_v_BD]
+
+            count_of_statuses = len(result_all)
+
+            if len(result_all) != 1:
+                if index_v_BD != 0 and index_v_BD != count_of_statuses - 1:
+                    keyboard = types.InlineKeyboardMarkup()
+                    add1 = types.InlineKeyboardButton(text=">>", callback_data=f'status>>{callback}>>|{index_v_BD}')
+                    add2 = types.InlineKeyboardButton(text="<<", callback_data=f'status<<{callback}<<|{index_v_BD}')
+                    addc = types.InlineKeyboardButton(text=f"({index_v_BD + 1}/{count_of_statuses})",
+                                                      callback_data=f'cifr|{index_v_BD}')
+                    keyboard.row(add2, addc, add1)
+                elif index_v_BD == 0:
+                    keyboard = types.InlineKeyboardMarkup(row_width=2)
+                    add1 = types.InlineKeyboardButton(text=">>", callback_data=f'status>>{callback}>>|{index_v_BD}')
+                    addc = types.InlineKeyboardButton(text=f"({index_v_BD + 1}/{count_of_statuses})",
+                                                      callback_data=f'cifr|{index_v_BD}')
+                    keyboard.row(add1, addc)
+                else:
+                    keyboard = types.InlineKeyboardMarkup()
+                    add2 = types.InlineKeyboardButton(text="<<", callback_data=f'status<<{callback}<<|{index_v_BD}')
+                    addc = types.InlineKeyboardButton(text=f"({index_v_BD + 1}/{count_of_statuses})",
+                                                      callback_data=f'cifr|{index_v_BD}')
+                    keyboard.row(add2, addc)
+            else:
+                keyboard = types.InlineKeyboardMarkup()
+                addc = types.InlineKeyboardButton(text=f"({index_v_BD + 1}/{count_of_statuses})",
+                                                  callback_data=f'cifr|{index_v_BD}')
+                keyboard.row(addc)
+
+            href = result[7]
+            addhref = types.InlineKeyboardButton("👁 Смотреть", url=f'{href}')
+            keyboard.row(addhref)
+
+            addback = types.InlineKeyboardButton("🔙 Назад в меню", callback_data=f'back_to_menu|{index_v_BD}')
+            keyboard.row(addback)
+
+            nazv = f'{result[0]}\n\n{result[5]}'
+
+            photo = open(result[6], 'rb')
+
+            bot.delete_message(chat_id, message_id)
+
+            bot.send_photo(chat_id, photo, caption=f'{nazv}', reply_markup=keyboard)
+        elif pravo[0] == 'status':
+            index_v_BD = int(info[1])
+            index_v_BD += 1
+            print(pravo, callback)
+            result_all = status(pravo[1])
+
+            result = result_all[index_v_BD]
+
+            count_of_statuses = len(result_all)
+
+            if index_v_BD != count_of_statuses - 1 and index_v_BD != 0:
+                keyboard = types.InlineKeyboardMarkup()
+                add1 = types.InlineKeyboardButton(text=">>", callback_data=f'status>>{pravo[1]}>>|{index_v_BD}')
+                add2 = types.InlineKeyboardButton(text="<<", callback_data=f'status<<{pravo[1]}<<|{index_v_BD}')
+                addc = types.InlineKeyboardButton(text=f"({index_v_BD + 1}/{count_of_statuses})",
+                                                  callback_data=f'cifr|{index_v_BD}')
+                keyboard.row(add2, addc, add1)
+            else:
+                keyboard = types.InlineKeyboardMarkup()
+                add2 = types.InlineKeyboardButton(text="<<", callback_data=f'status<<{pravo[1]}<<|{index_v_BD}')
+                addc = types.InlineKeyboardButton(text=f"({index_v_BD + 1}/{count_of_statuses})",
+                                                  callback_data=f'cifr|{index_v_BD}')
+                keyboard.row(add2, addc)
+
+            href = result[7]
+            addhref = types.InlineKeyboardButton("👁 Смотреть", url=f'{href}')
+            keyboard.row(addhref)
+
+            addback = types.InlineKeyboardButton("🔙 Назад в меню", callback_data=f'back_to_menu|{index_v_BD}')
+            keyboard.row(addback)
+
+            nazv = f'{result[0]}\n\n{result[5]}'
+
+            photo = open(result[6], 'rb')
+
+            bot.edit_message_media(media=telebot.types.InputMedia(type='photo', media=photo, caption=nazv),
+                                   chat_id=chat_id, message_id=message_id,
+                                   reply_markup=keyboard)
+        elif levo[0] == 'status':
+            index_v_BD = int(info[1])
+            index_v_BD -= 1
+
+            result_all = status(levo[1])
+
+            result = result_all[index_v_BD]
+
+            count_of_statuses = len(result_all)
+
+            if index_v_BD != 0 and index_v_BD != count_of_statuses - 1:
+                keyboard = types.InlineKeyboardMarkup()
+                add1 = types.InlineKeyboardButton(text=">>", callback_data=f'status>>{levo[1]}>>|{index_v_BD}')
+                add2 = types.InlineKeyboardButton(text="<<", callback_data=f'status<<{levo[1]}<<|{index_v_BD}')
+                addc = types.InlineKeyboardButton(text=f"({index_v_BD + 1}/{count_of_statuses})",
+                                                  callback_data=f'cifr|{index_v_BD}')
+                keyboard.row(add2, addc, add1)
+            else:
+                keyboard = types.InlineKeyboardMarkup()
+                add1 = types.InlineKeyboardButton(text=">>", callback_data=f'status>>{levo[1]}>>|{index_v_BD}')
+                addc = types.InlineKeyboardButton(text=f"({index_v_BD + 1}/{count_of_statuses})",
+                                                  callback_data=f'cifr|{index_v_BD}')
+                keyboard.row(addc, add1)
+
+            href = result[7]
+            addhref = types.InlineKeyboardButton("👁 Смотреть", url=f'{href}')
+            keyboard.row(addhref)
+
+            addback = types.InlineKeyboardButton("🔙 Назад в меню", callback_data=f'back_to_menu|{index_v_BD}')
+            keyboard.row(addback)
+
+            nazv = f'{result[0]}\n\n{result[5]}'
+
+            photo = open(result[6], 'rb')
+
+            bot.edit_message_media(media=telebot.types.InputMedia(type='photo', media=photo, caption=nazv),
+                                   chat_id=chat_id, message_id=message_id,
+                                   reply_markup=keyboard)
 
 
 bot.polling(none_stop=True, interval=0)
