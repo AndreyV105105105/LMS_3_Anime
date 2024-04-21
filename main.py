@@ -255,7 +255,6 @@ def callback_inline(call):
                 else:
                     slovar_index_v_BD[chat_id] = 0
                 index_v_BD = slovar_index_v_BD[chat_id]
-                print(izb)
 
                 result = izb[index_v_BD]
 
@@ -273,18 +272,18 @@ def callback_inline(call):
 
                 if len(izb) != 1:
                     if index_v_BD != 0 and index_v_BD != count_of_iz - 1:
-                        add1 = types.InlineKeyboardButton(text=">>", callback_data=f'status>>{callback}>>|{result[8]}')
-                        add2 = types.InlineKeyboardButton(text="<<", callback_data=f'status<<{callback}<<|{result[8]}')
+                        add1 = types.InlineKeyboardButton(text=">>", callback_data=f'izbran>>|{result[8]}')
+                        add2 = types.InlineKeyboardButton(text="<<", callback_data=f'izbran<<|{result[8]}')
                         addc = types.InlineKeyboardButton(text=f"({index_v_BD + 1}/{count_of_iz})",
                                                           callback_data=f'cifr|{result[8]}')
                         keyboard.row(add2, addc, add1)
                     elif index_v_BD == 0:
-                        add1 = types.InlineKeyboardButton(text=">>", callback_data=f'status>>{callback}>>|{result[8]}')
+                        add1 = types.InlineKeyboardButton(text=">>", callback_data=f'izbran>>|{result[8]}')
                         addc = types.InlineKeyboardButton(text=f"({index_v_BD + 1}/{count_of_iz})",
                                                           callback_data=f'cifr|{result[8]}')
                         keyboard.row(add1, addc)
                     else:
-                        add2 = types.InlineKeyboardButton(text="<<", callback_data=f'status<<{callback}<<|{result[8]}')
+                        add2 = types.InlineKeyboardButton(text="<<", callback_data=f'izbran<<|{result[8]}')
                         addc = types.InlineKeyboardButton(text=f"({index_v_BD + 1}/{count_of_iz})",
                                                           callback_data=f'cifr|{result[8]}')
                         keyboard.row(add2, addc)
@@ -309,6 +308,108 @@ def callback_inline(call):
                 bot.send_photo(chat_id, photo, caption=f'{nazv}', reply_markup=keyboard)
 
 
+        elif pravo[0] == 'izbran':
+            if chat_id not in slovar_index_v_BD:
+                slovar_index_v_BD[chat_id] = 0
+            else:
+                slovar_index_v_BD[chat_id] += 1
+            index_v_BD = slovar_index_v_BD[chat_id]
+            izb = read_saved(str(chat_id))
+            if len(izb) != 0:
+                izb = izb[0]
+            print(izb)
+            result = izb[index_v_BD]
+
+            count_of_statuses = len(izb)
+
+            keyboard = types.InlineKeyboardMarkup()
+
+
+            print(result)
+            addiz = types.InlineKeyboardButton(text="Добавить в избранное", callback_data=f'iz_ad|{result[8]}')
+            for uuu in izb:
+                if result[8] == uuu[-1]:
+                    addiz = types.InlineKeyboardButton(text="Удалить из избранного",
+                                                       callback_data=f'iz_del|{result[8]}')
+                    break
+            keyboard.row(addiz)
+
+            if index_v_BD != count_of_statuses - 1 and index_v_BD != 0:
+                add1 = types.InlineKeyboardButton(text=">>", callback_data=f'izbran>>|{result[8]}')
+                add2 = types.InlineKeyboardButton(text="<<", callback_data=f'izbran<<|{result[8]}')
+                addc = types.InlineKeyboardButton(text=f"({index_v_BD + 1}/{count_of_statuses})",
+                                                  callback_data=f'cifr|{result[8]}')
+                keyboard.row(add2, addc, add1)
+            else:
+                add2 = types.InlineKeyboardButton(text="<<", callback_data=f'izbran<<|{result[8]}')
+                addc = types.InlineKeyboardButton(text=f"({index_v_BD + 1}/{count_of_statuses})",
+                                                  callback_data=f'cifr|{result[8]}')
+                keyboard.row(add2, addc)
+
+            href = result[7]
+            addhref = types.InlineKeyboardButton("👁 Смотреть", url=f'{href}')
+            keyboard.row(addhref)
+
+            addback = types.InlineKeyboardButton("🔙 Назад в меню", callback_data=f'back_to_menu|{result[8]}')
+            keyboard.row(addback)
+
+            nazv = f'{result[0]}\n\n{result[5]}'
+
+            photo = open(result[6], 'rb')
+
+            bot.edit_message_media(media=telebot.types.InputMedia(type='photo', media=photo, caption=nazv),
+                                   chat_id=chat_id, message_id=message_id,
+                                   reply_markup=keyboard)
+        elif levo[0] == 'izbran':
+            if chat_id not in slovar_index_v_BD:
+                slovar_index_v_BD[chat_id] = 0
+            else:
+                slovar_index_v_BD[chat_id] -= 1
+            index_v_BD = slovar_index_v_BD[chat_id]
+
+            izb = read_saved(str(chat_id))
+            if len(izb) != 0:
+                izb = izb[0]
+            result = izb[index_v_BD]
+
+            count_of_statuses = len(izb)
+
+            keyboard = types.InlineKeyboardMarkup()
+
+            addiz = types.InlineKeyboardButton(text="Добавить в избранное", callback_data=f'iz_ad|{result[8]}')
+            for uuu in izb:
+                if result[8] == uuu[-1]:
+                    addiz = types.InlineKeyboardButton(text="Удалить из избранного",
+                                                       callback_data=f'iz_del|{result[8]}')
+                    break
+            keyboard.row(addiz)
+
+            if index_v_BD != 0 and index_v_BD != count_of_statuses - 1:
+                add1 = types.InlineKeyboardButton(text=">>", callback_data=f'izbran>>|{result[8]}')
+                add2 = types.InlineKeyboardButton(text="<<", callback_data=f'izbran<<|{result[8]}')
+                addc = types.InlineKeyboardButton(text=f"({index_v_BD + 1}/{count_of_statuses})",
+                                                  callback_data=f'cifr|{result[8]}')
+                keyboard.row(add2, addc, add1)
+            else:
+                add1 = types.InlineKeyboardButton(text=">>", callback_data=f'izbran>>|{result[8]}')
+                addc = types.InlineKeyboardButton(text=f"({index_v_BD + 1}/{count_of_statuses})",
+                                                  callback_data=f'cifr|{result[8]}')
+                keyboard.row(addc, add1)
+
+            href = result[7]
+            addhref = types.InlineKeyboardButton("👁 Смотреть", url=f'{href}')
+            keyboard.row(addhref)
+
+            addback = types.InlineKeyboardButton("🔙 Назад в меню", callback_data=f'back_to_menu|{result[8]}')
+            keyboard.row(addback)
+
+            nazv = f'{result[0]}\n\n{result[5]}'
+
+            photo = open(result[6], 'rb')
+
+            bot.edit_message_media(media=telebot.types.InputMedia(type='photo', media=photo, caption=nazv),
+                                   chat_id=chat_id, message_id=message_id,
+                                   reply_markup=keyboard)
 
 
         elif callback == 'back_to_menu':
@@ -541,6 +642,8 @@ def callback_inline(call):
             print(id)
             if chat_id not in slovar_index_v_BD:
                 slovar_index_v_BD[chat_id] = 0
+            else:
+                slovar_index_v_BD[chat_id] = int(info[1]) - 1
             index_v_BD = slovar_index_v_BD[chat_id]
 
             result = basa(int(info[1]) - 1)
@@ -598,6 +701,8 @@ def callback_inline(call):
             print(id)
             if chat_id not in slovar_index_v_BD:
                 slovar_index_v_BD[chat_id] = 0
+            else:
+                slovar_index_v_BD[chat_id] = int(info[1]) - 1
             index_v_BD = slovar_index_v_BD[chat_id]
 
             result = basa(int(info[1]) - 1)
